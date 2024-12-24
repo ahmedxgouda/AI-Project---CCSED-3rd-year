@@ -15,7 +15,7 @@ class MazeApp:
         end (tuple): The ending cell of the maze.
         solved (bool): A flag indicating whether the maze has been solved.
         reset_button (tk.Button): The button to reset the maze.
-        solve_button (tk.Button): The button to solve the maze using Dijkstra's algorithm.
+        dijkstra_solve_button (tk.Button): The button to solve the maze using Dijkstra's algorithm.
     """
     
     def __init__(self, root):
@@ -25,7 +25,7 @@ class MazeApp:
             root (tk.Tk): The root window of the application.
         """
         self.root = root
-        self.root.title("Maze Solver with Dijkstra's Algorithm")
+        self.root.title("Maze Solver- AI HACKERS")
         self.canvas = tk.Canvas(root, width=600, height=650, bg="white")
         self.canvas.pack()
         self.rows = 20
@@ -39,8 +39,10 @@ class MazeApp:
         self.solved = False
         self.reset_button = tk.Button(root, text="Reset", command=self.reset)
         self.reset_button.pack()
-        self.solve_button = tk.Button(root, text="Solve", command=self.dijkstra)
-        self.solve_button.pack()
+        self.dijkstra_solve_button = tk.Button(root, text="Solve with Dijkstra (Shortest Path)", command=self.dijkstra)
+        self.dijkstra_solve_button.pack()
+        self.dfs_solve_button = tk.Button(root, text="Solve with DFS (Better Performance)", command=self.dfs)
+        self.dfs_solve_button.pack()
         # Put a message under the grid indicating that the start is green, end is red, wall is black, and path is blue
         self.canvas.create_text(300, 620, text="Click to set the start point.", font=("Helvetica", 10), tags="message")
         
@@ -144,6 +146,40 @@ class MazeApp:
         self.end_game()  # Display a message indicating that the maze has been solved
         
 
+    def dfs(self):
+        """
+        Solves the maze using Depth First Search.
+        """
+        # Check if start or end points are not defined
+        if not self.start or not self.end:
+            return
+
+        start = self.start
+        end = self.end
+        stack = [start]
+        visited = set()
+        previous = {start: None}
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        
+        while stack:
+            current_node = stack.pop()
+            if current_node == end:
+                break
+            visited.add(current_node)
+            for direction in directions:
+                neighbor = (current_node[0] + direction[0], current_node[1] + direction[1])
+                if 0 <= neighbor[0] < self.rows and 0 <= neighbor[1] < self.cols and self.grid[neighbor[0]][neighbor[1]] != 3:
+                    if neighbor not in visited:
+                        previous[neighbor] = current_node
+                        stack.append(neighbor)
+                        
+        if end not in previous:
+            self.no_path()
+            return
+        self.draw_path(previous, end)
+        self.solved = True
+        self.end_game()
+
     def get_path(self, previous, end):
         """
         Draws the path from the start to the end cell based on the previous nodes.
@@ -180,6 +216,8 @@ class MazeApp:
         Displays a message indicating that there is no path from the start to the end.
         """
         self.canvas.create_text(300, 300, text="No path found!", fill="red", font=("Helvetica", 24))
+        self.dfs_solve_button.config(state="disabled")
+        self.dijkstra_solve_button.config(state="disabled")
         
     def end_game(self):
         """
@@ -188,7 +226,8 @@ class MazeApp:
         self.canvas.create_text(300, 300, text="Maze solved!", fill="green", font=("Helvetica", 24))
         self.canvas.delete("message")
         self.canvas.create_text(300, 620, text="Congratulations!", font=("Helvetica", 12), tags="message", fill="green")
-        self.solve_button.config(state="disabled")
+        self.dijkstra_solve_button.config(state="disabled")
+        self.dfs_solve_button.config(state="disabled")
 
     def reset(self):
         """
@@ -199,7 +238,8 @@ class MazeApp:
         self.start = None
         self.end = None
         self.solved = False
-        self.solve_button.config(state="normal")
+        self.dijkstra_solve_button.config(state="normal")
+        self.dfs_solve_button.config(state="normal")
         self.draw_grid()
         self.canvas.create_text(300, 620, text="Click to set the start point.", font=("Helvetica", 10), tags="message")
 
