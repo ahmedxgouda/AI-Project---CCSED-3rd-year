@@ -26,7 +26,8 @@ class MazeApp:
         """
         self.root = root
         self.root.title("Maze Solver- AI HACKERS")
-        self.canvas = tk.Canvas(root, width=600, height=650, bg="white")
+        self.canvas = tk.Canvas(root, width=620, height=670, bg="white")
+        self.offset = (10, 20)
         self.canvas.pack()
         self.rows = 20
         self.cols = 20
@@ -44,7 +45,8 @@ class MazeApp:
         self.dfs_solve_button = tk.Button(root, text="Solve with DFS (Better Performance)", command=self.dfs)
         self.dfs_solve_button.pack()
         # Put a message under the grid indicating that the start is green, end is red, wall is black, and path is blue
-        self.canvas.create_text(300, 620, text="Click to set the start point.", font=("Helvetica", 10), tags="message")
+        self.message_position = (310, 640)
+        self.canvas.create_text(self.message_position[0], self.message_position[1], text="Click to set the start point.", font=("Helvetica", 10), tags="message")
         
 
     def draw_grid(self):
@@ -55,8 +57,8 @@ class MazeApp:
             for j in range(self.cols):  # Loop through each column
                 
                 # Calculate the coordinates of the top-left corner of the cell
-                x1 = j * self.cell_size
-                y1 = i * self.cell_size
+                x1 = j * self.cell_size + self.offset[0]
+                y1 = i * self.cell_size + self.offset[1]
                 
                 # Calculate the coordinates of the bottom-right corner of the cell
                 x2 = x1 + self.cell_size
@@ -72,7 +74,7 @@ class MazeApp:
         event (tk.Event): The event object containing information about the click event.
         """
         x, y = event.x, event.y
-        row, col = y // self.cell_size, x // self.cell_size
+        row, col = (y - self.offset[1]) // self.cell_size, (x - self.offset[0]) // self.cell_size
         # Check if the user clicked outside the grid
         if row >= self.rows or col >= self.cols:
             return
@@ -81,28 +83,30 @@ class MazeApp:
         # Check if the maze has already been solved
         if self.solved:
             return
+        # Calculate the coordinates of the rectangle
+        x1 = col * self.cell_size + self.offset[0]
+        y1 = row * self.cell_size + self.offset[1]
+        x2 = x1 + self.cell_size
+        y2 = y1 + self.cell_size
         if not self.start and self.grid[row][col] == 0:
             self.start = (row, col)
             self.grid[row][col] = 1
-            self.canvas.create_rectangle(col * self.cell_size, row * self.cell_size,
-                                         (col + 1) * self.cell_size, (row + 1) * self.cell_size,
+            self.canvas.create_rectangle(x1, y1, x2, y2,
                                          outline="black", fill="green")
-            self.canvas.create_text(col * self.cell_size + 15, row * self.cell_size + 15, text="Start", font=("Helvetica", 8))
+            self.canvas.create_text(x1 + 15, y1 + 15, text="Start", font=("Helvetica", 8))
             self.canvas.delete("message")
-            self.canvas.create_text(300, 620, text="Click to set the end point.", font=("Helvetica", 10), tags="message")
+            self.canvas.create_text(self.message_position[0], self.message_position[1], text="Click to set the end point.", font=("Helvetica", 10), tags="message")
         elif not self.end and self.grid[row][col] == 0:
             self.end = (row, col)
             self.grid[row][col] = 2
-            self.canvas.create_rectangle(col * self.cell_size, row * self.cell_size,
-                                         (col + 1) * self.cell_size, (row + 1) * self.cell_size,
+            self.canvas.create_rectangle(x1, y1, x2, y2,
                                          outline="black", fill="red")
-            self.canvas.create_text(col * self.cell_size + 15, row * self.cell_size + 15, text="End", font=("Helvetica", 8))
+            self.canvas.create_text(x1 + 15, y1 + 15, text="End", font=("Helvetica", 8))
             self.canvas.delete("message")
-            self.canvas.create_text(300, 620, text="Click to draw walls. Then click 'Solve'.", font=("Helvetica", 10), tags="message")
+            self.canvas.create_text(self.message_position[0], self.message_position[1], text="Click to draw walls. Then click 'Solve'.", font=("Helvetica", 10), tags="message")
         elif self.grid[row][col] == 0:
             self.grid[row][col] = 3
-            self.canvas.create_rectangle(col * self.cell_size, row * self.cell_size,
-                                         (col + 1) * self.cell_size, (row + 1) * self.cell_size,
+            self.canvas.create_rectangle(x1, y1, x2, y2,
                                          outline="black", fill="black")
 
 
@@ -202,11 +206,16 @@ class MazeApp:
         previous (dict): A dictionary mapping each cell to its previous cell in the path.
         end (tuple): The ending cell of the maze.
         """
+        self.dfs_solve_button.config(state="disabled")
+        self.dijkstra_solve_button.config(state="disabled")
         path = self.get_path(previous, end)
         for cell in path[1:-1]:
             row, col = cell
-            self.canvas.create_rectangle(col * self.cell_size, row * self.cell_size,
-                                         (col + 1) * self.cell_size, (row + 1) * self.cell_size,
+            x1 = col * self.cell_size + self.offset[0]
+            y1 = row * self.cell_size + self.offset[1]
+            x2 = x1 + self.cell_size
+            y2 = y1 + self.cell_size
+            self.canvas.create_rectangle(x1, y1, x2, y2,
                                          outline="black", fill="blue")
             self.root.after(100, self.canvas.update())
     
@@ -215,7 +224,7 @@ class MazeApp:
         """
         Displays a message indicating that there is no path from the start to the end.
         """
-        self.canvas.create_text(300, 300, text="No path found!", fill="red", font=("Helvetica", 24))
+        self.canvas.create_text(310, 335, text="No path found!", fill="red", font=("Helvetica", 24))
         self.dfs_solve_button.config(state="disabled")
         self.dijkstra_solve_button.config(state="disabled")
         
@@ -223,9 +232,9 @@ class MazeApp:
         """
         Displays a message indicating that the maze has been solved.
         """
-        self.canvas.create_text(300, 300, text="Maze solved!", fill="green", font=("Helvetica", 24))
+        self.canvas.create_text(310, 335, text="Maze solved!", fill="green", font=("Helvetica", 24))
         self.canvas.delete("message")
-        self.canvas.create_text(300, 620, text="Congratulations!", font=("Helvetica", 12), tags="message", fill="green")
+        self.canvas.create_text(self.message_position[0], self.message_position[1], text="Congratulations!", font=("Helvetica", 12), tags="message", fill="green")
         self.dijkstra_solve_button.config(state="disabled")
         self.dfs_solve_button.config(state="disabled")
 
@@ -241,7 +250,7 @@ class MazeApp:
         self.dijkstra_solve_button.config(state="normal")
         self.dfs_solve_button.config(state="normal")
         self.draw_grid()
-        self.canvas.create_text(300, 620, text="Click to set the start point.", font=("Helvetica", 10), tags="message")
+        self.canvas.create_text(self.message_position[0], self.message_position[1], text="Click to set the start point.", font=("Helvetica", 10), tags="message")
 
 if __name__ == "__main__":
     root = tk.Tk()
